@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShellCron</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="{{ url_for('ui.static', filename='css/style.css') }}">
+    <style>
+        #toast-container {
+            position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+            display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        .toast {
+            padding: 0.65rem 1.1rem; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: toast-in 0.25s ease;
+            max-width: 320px;
+            cursor: pointer;
+        }
+        .toast-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .toast-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .toast-out { animation: toast-out 0.25s ease forwards; }
+        @keyframes toast-in { from { opacity:0; transform:translateX(120px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes toast-out { from { opacity:1; } to { opacity:0; transform:translateX(120px); } }
+    </style>
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <header class="app-header">
+        <div class="app-container">
+            <h1>🦀 ShellCron</h1>
+            <nav class="app-nav">
+                <a href="/ui/" class="{% if request.path == '/ui/' %}active{% endif %}">{{ _t('Tasks') }}</a>
+                <a href="/ui/logs" class="{% if request.path.startswith('/ui/logs') %}active{% endif %}">{{ _t('Logs') }}</a>
+                <a href="/ui/settings" class="{% if request.path == '/ui/settings' %}active{% endif %}">{{ _t('Settings') }}</a>
+            </nav>
+        </div>
+    </header>
+    <div class="app-container">
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+<script>
+(function(){
+    // Toast system
+    var container = document.getElementById('toast-container');
+    function showToast(msg, type) {
+        type = type || 'info';
+        var t = document.createElement('div');
+        t.className = 'toast toast-' + type;
+        t.textContent = msg;
+        t.onclick = function(){ t.classList.add('toast-out'); setTimeout(function(){ t.remove(); }, 250); };
+        container.appendChild(t);
+        setTimeout(function(){
+            if (t.parentNode) { t.classList.add('toast-out'); setTimeout(function(){ t.remove(); }, 250); }
+        }, 3000);
+    }
+
+    // Deduplication guard: prevent duplicate toast within 100ms
+    var toastTimer = null;
+
+    // Listen for HX-Trigger events (supports both 'message' and 'value' keys)
+    document.addEventListener('show-toast', function(evt){
+        if (toastTimer) return; // ignore duplicate within 100ms
+        toastTimer = setTimeout(function(){ toastTimer = null; }, 100);
+        var detail = evt.detail;
+        var msg = detail.message || detail.value || '';
+        if (msg) showToast(msg, detail.type || 'success');
+    });
+})();
+</script>
+</body>
+</html>

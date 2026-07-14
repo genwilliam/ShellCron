@@ -1,0 +1,9 @@
+{% for t in tasks %}
+{% include "_task_row.html" %}
+{% else %}
+<tr>
+    <td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">
+        {{ _t('No tasks configured') }}
+    </td>
+</tr>
+{% endfor %}

@@ -1,0 +1,48 @@
+<tr>
+    <td style="width:40px;color:var(--text-secondary);font-weight:500">{{ t.id }}</td>
+    <td><strong>{{ t.name }}</strong></td>
+    <td>
+        <span class="badge {% if not t.enabled %}badge-gray
+            {% elif t.running %}badge-green
+            {% elif t.last_status == 'failed' %}badge-red
+            {% elif t.last_status == 'success' %}badge-green
+            {% else %}badge-yellow{% endif %}">
+            {% if not t.enabled %}{{ _t('Disabled') }}
+            {% elif t.running %}{{ _t('Running') }}
+            {% elif t.last_status == 'failed' %}{{ _t('Failed') }}
+            {% elif t.last_status == 'success' %}{{ _t('Enabled') }}
+            {% else %}{{ _t('Waiting') }}{% endif %}
+        </span>
+    </td>
+    <td style="color:var(--text-secondary)">{{ t.last_run[:16] if t.last_run else '-' }}</td>
+    <td>
+        {% if t.last_status == 'success' %}<span class="status-enabled">{{ _t('Success') }}</span>
+        {% elif t.last_status == 'failed' %}<span class="status-failed">{{ _t('Failed') }}</span>
+        {% elif t.last_status == 'running' %}<span class="status-running">{{ _t('Running') }}</span>
+        {% else %}<span style="color:var(--text-secondary)">-</span>{% endif %}
+    </td>
+    <td class="next-run-cell" data-next="{{ t.next_run or '' }}">
+        {% if t.next_run %}
+            <span class="next-run-ts">{{ t.next_run[:16] }}</span>
+        {% else %}<span style="color:var(--text-secondary)">-</span>{% endif %}
+    </td>
+    <td>
+        <div class="actions">
+            <a href="/ui/tasks/{{ t.id }}/edit" class="btn btn-ghost btn-xs">{{ _t('Edit') }}</a>
+            <button class="btn btn-xs btn-success"
+                    hx-post="/ui/tasks/{{ t.id }}/run"
+                    hx-swap="outerHTML"
+                    hx-target="closest tr">{{ _t('Run') }}</button>
+            <button class="btn btn-xs btn-ghost"
+                    hx-post="/ui/tasks/{{ t.id }}/toggle"
+                    hx-swap="outerHTML"
+                    hx-target="closest tr">
+                {{ _t('Disable') if t.enabled else _t('Enable') }}
+            </button>
+            <button class="btn btn-xs btn-danger"
+                    hx-post="/ui/tasks/{{ t.id }}/delete"
+                    hx-confirm="{{ _t('Delete task') }} {{ t.name }}?"
+                    hx-swap="none">{{ _t('Delete') }}</button>
+        </div>
+    </td>
+</tr>

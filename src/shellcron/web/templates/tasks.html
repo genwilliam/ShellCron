@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ _t('Tasks') }}</h2>
+    <a href="/ui/tasks/new" class="btn btn-primary">+ {{ _t('New Task') }}</a>
+</div>
+
+<div class="card">
+<div class="table-wrapper">
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>{{ _t('Task Name') }}</th>
+            <th>{{ _t('Status') }}</th>
+            <th>{{ _t('Last Run') }}</th>
+            <th>{{ _t('Result') }}</th>
+            <th>{{ _t('Next Run') }}</th>
+            <th>{{ _t('Actions') }}</th>
+        </tr>
+    </thead>
+    <tbody id="task-tbody"
+           hx-get="/ui/tasks/table"
+           hx-trigger="every 10s"
+           hx-swap="innerHTML">
+        {% include "_task_table.html" %}
+    </tbody>
+</table>
+</div>
+</div>
+
+<div id="summary-bar" hx-get="/ui/tasks/summary" hx-trigger="every 10s" hx-swap="innerHTML">
+    {% include "_task_summary.html" %}
+</div>
+
+<script>
+// Countdown timers
+function updateCountdowns() {
+    document.querySelectorAll('.next-run-cell').forEach(function(cell) {
+        var next = cell.dataset.next;
+        if (!next) return;
+        var target = new Date(next + 'Z');
+        var now = new Date();
+        var diff = target - now;
+        if (diff <= 0) { cell.querySelector('.countdown').textContent = 'now'; return; }
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var mins = Math.floor((diff % 3600000) / 60000);
+        var s = '';
+        if (days > 0) s += days + 'd ';
+        if (hours > 0 || days > 0) s += hours + 'h ';
+        s += mins + 'm';
+        cell.querySelector('.countdown').textContent = s;
+    });
+}
+updateCountdowns();
+setInterval(updateCountdowns, 60000);
+</script>
+{% endblock %}
