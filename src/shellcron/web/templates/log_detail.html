@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin-bottom:1.5rem">{{ _t('Log Detail') }} #{{ log.id }}</h2>
+
+<div class="card">
+<table style="width:auto">
+    <tr><td style="font-weight:600;width:120px;border:none">{{ _t('Task') }}</td>
+        <td style="border:none"><a href="/ui/logs?task_id={{ log.task_id }}">{{ task_name }}</a></td></tr>
+    <tr><td style="font-weight:600;border:none">{{ _t('Start time') }}</td>
+        <td style="border:none">{{ log.started_at[:19] if log.started_at else '-' }}</td></tr>
+    <tr><td style="font-weight:600;border:none">{{ _t('End time') }}</td>
+        <td style="border:none">{{ log.finished_at[:19] if log.finished_at else '-' }}</td></tr>
+    <tr><td style="font-weight:600;border:none">{{ _t('Status') }}</td>
+        <td style="border:none">
+            {% if log.status == 'success' %}<span class="badge badge-green">{{ _t('Success') }}</span>
+            {% elif log.status == 'failed' %}<span class="badge badge-red">{{ _t('Failed') }}</span>
+            {% else %}<span class="badge badge-gray">{{ log.status }}</span>{% endif %}
+        </td></tr>
+    <tr><td style="font-weight:600;border:none">{{ _t('Trigger') }}</td>
+        <td style="border:none">{{ log.triggered_by or '-' }}</td></tr>
+    <tr><td style="font-weight:600;border:none">{{ _t('Duration') }}</td>
+        <td style="border:none">{% if log.duration_ms %}{{ log.duration_ms }}ms{% else %}-{% endif %}</td></tr>
+</table>
+</div>
+
+<h3 style="margin:1.5rem 0 0.75rem">{{ _t('Script Results') }}</h3>
+{% for r in results %}
+<div class="script-card">
+    <h4>{{ r.script_path }}</h4>
+    <p style="font-size:0.82rem;color:var(--text-secondary)">
+        {{ _t('Return code') }}: <strong>{{ r.return_code }}</strong>
+        &nbsp;|&nbsp; {{ _t('Duration') }}: {% if r.duration_ms %}{{ r.duration_ms }}ms{% else %}-{% endif %}
+    </p>
+    {% if r.stdout %}
+    <pre><code>{{ r.stdout[:2000] }}{% if r.stdout|length > 2000 %}<br>... ({{ _t('truncated') }}){% endif %}</code></pre>
+    {% endif %}
+    {% if r.stderr %}
+    <pre><code style="color:#f38ba8">{{ r.stderr[:2000] }}{% if r.stderr|length > 2000 %}<br>... ({{ _t('truncated') }}){% endif %}</code></pre>
+    {% endif %}
+</div>
+{% else %}
+<p style="color:var(--text-secondary)">{{ _t('No logs.') }}</p>
+{% endfor %}
+
+<div style="margin-top:1.5rem">
+    <a href="/ui/logs{% if log.task_id %}?task_id={{ log.task_id }}{% endif %}" class="btn btn-ghost">← {{ _t('Back') }}</a>
+</div>
+{% endblock %}

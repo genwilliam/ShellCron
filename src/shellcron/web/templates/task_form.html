@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin-bottom:1.5rem">{% if task %}{{ _t('Edit Task') }}: {{ task.name }}{% else %}{{ _t('New Task') }}{% endif %}</h2>
+
+<div class="card form-card">
+<form method="post" action="/ui/tasks/save">
+    {% if task %}<input type="hidden" name="task_id" value="{{ task.id }}">{% endif %}
+
+    <div class="form-group">
+        <label class="form-label" for="name">{{ _t('Task Name') }}</label>
+        <input type="text" id="name" name="name" value="{{ task.name if task else '' }}" required>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="schedule_type">{{ _t('Schedule Type') }}</label>
+        <select id="schedule_type" name="schedule_type" onchange="toggleSchedule()">
+            {% for key, label in schedule_types %}
+            <option value="{{ key }}" {% if task and task.schedule_type == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="interval-config" class="form-group">
+        <label class="form-label" for="interval_days">{{ _t('Interval (days)') }}</label>
+        <input type="number" id="interval_days" name="interval_days" step="0.01" min="0.001"
+               value="{{ task.schedule_config.days if task and task.schedule_config.days else 1 }}">
+    </div>
+
+    <div id="cron-config" class="form-group" style="display:none">
+        <label class="form-label" for="cron_expr">{{ _t('Cron Expression') }}</label>
+        <input type="text" id="cron_expr" name="cron_expr" placeholder="0 0 * * *"
+               value="{{ task.schedule_config.expr if task and task.schedule_config.expr else '0 0 * * *' }}">
+        <div class="form-hint">{{ _t('Format: minute hour day month weekday') }}</div>
+    </div>
+
+    <div id="fixed-config" class="form-group" style="display:none">
+        <label class="form-label" for="fixed_time">{{ _t('Time (HH:MM)') }}</label>
+        <input type="text" id="fixed_time" name="fixed_time" placeholder="00:00"
+               value="{{ task.schedule_config.time if task and task.schedule_config.time else '00:00' }}">
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="scripts">{{ _t('Scripts') }}</label>
+        <div style="display:flex;gap:0.5rem;align-items:start">
+            <textarea id="scripts" name="scripts" rows="3" placeholder="/path/to/script.sh"
+                      style="flex:1">{% if task %}{{ task.script_paths | join('\n') }}{% endif %}</textarea>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('file-picker').click()" style="margin-top:0.3rem">
+                📁 {{ 'Browse' if _lang == 'en' else '选择' }}
+            </button>
+        </div>
+        <input type="file" id="file-picker" style="display:none" multiple accept=".sh,.bash,.py,.js,.pl,.rb"
+               onchange="handleFiles(this)">
+        <div class="form-hint">{{ _t('One per line') }}</div>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="script_args">{{ _t('Script Arguments') }}</label>
+        <input type="text" id="script_args" name="script_args"
+               value="{{ task.script_args | join(' ') if task and task.script_args else '' }}"
+               placeholder="--verbose --dry-run">
+        <div class="form-hint">{{ _t('Space-separated') }}</div>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="misfire_policy">{{ _t('Misfire Policy') }}</label>
+        <select id="misfire_policy" name="misfire_policy">
+            <option value="skip" {% if task and task.misfire_policy == 'skip' %}selected{% endif %}>{{ _t('Skip missed runs') }}</option>
+            <option value="catchup" {% if task and task.misfire_policy == 'catchup' %}selected{% endif %}>{{ _t('Catch up (run once)') }}</option>
+        </select>
+        <div class="form-hint">{{ _t('What to do when daemon was offline and a scheduled run was missed.') }}</div>
+    </div>
+
+    <div class="form-group">
+        <label class="checkbox-row">
+            <input type="checkbox" name="enabled" {% if not task or task.enabled %}checked{% endif %}>
+            <span>{{ _t('Enabled') }}</span>
+        </label>
+    </div>
+
+    <div style="display:flex;gap:0.5rem;padding-top:0.5rem">
+        <button type="submit" class="btn btn-primary">{{ _t('Save') }}</button>
+        <a href="/ui/" class="btn btn-ghost">{{ _t('Cancel') }}</a>
+    </div>
+</form>
+</div>
+
+<script>
+function toggleSchedule() {
+    var type = document.getElementById('schedule_type').value;
+    document.getElementById('interval-config').style.display = (type === 'interval' || type === 'relative_interval') ? '' : 'none';
+    document.getElementById('cron-config').style.display = type === 'cron' ? '' : 'none';
+    document.getElementById('fixed-config').style.display = type === 'fixed_time' ? '' : 'none';
+}
+
+function handleFiles(input) {
+    var textarea = document.getElementById('scripts');
+    var files = Array.from(input.files);
+    var paths = files.map(function(f) { return f.path || f.name; });
+    var current = textarea.value.trim();
+    if (current) {
+        textarea.value = current + '\n' + paths.join('\n');
+    } else {
+        textarea.value = paths.join('\n');
+    }
+    input.value = '';
+}
+
+toggleSchedule();
+</script>
+{% endblock %}

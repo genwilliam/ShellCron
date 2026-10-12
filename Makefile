@@ -1,24 +1,44 @@
-.PHONY: install uninstall run deps clean
+.PHONY: install uninstall deps clean dev
 
 # Install dependencies
 deps:
 	pip install -r requirements.txt
 
-# Install ShellCron service
-install: deps
-	python3 -m daemon --install
+# Install project in development mode
+dev: deps
+	pip install -e .
 
-# Uninstall ShellCron (removes service + data)
+# Install system service
+install: dev
+	shcron install
+
+# Uninstall
 uninstall:
-	python3 -m daemon --uninstall
+	shcron uninstall --purge
 
-# Start the GUI
-run:
-	python3 -m gui
+# Start daemon (via service)
+start:
+	shcron start
 
-# Start the daemon (foreground)
-daemon:
-	python3 -m daemon
+# Stop daemon
+stop:
+	shcron stop
+
+# Show status
+status:
+	shcron status
+
+# Run diagnostics
+doctor:
+	shcron doctor
+
+# List tasks
+ls:
+	shcron ls
+
+# Run daemon in foreground (for debugging)
+foreground:
+	python -m shellcron.daemon
 
 # Clean cache files
 clean:

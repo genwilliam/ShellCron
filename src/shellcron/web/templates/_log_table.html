@@ -1,0 +1,35 @@
+<!-- HTMX fragment: log table rows -->
+{% set count = logs | length %}
+{% for l in logs %}
+<tr>
+    <td style="color:var(--text-secondary);white-space:nowrap;font-size:0.8rem">{{ l.started_at[:19] if l.started_at else '-' }}</td>
+    <td>
+        {% if task_id %}
+            <strong>{{ l._task_name }}</strong>
+        {% else %}
+            <a href="/ui/logs/{{ l.id }}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ l._task_name }}</a>
+        {% endif %}
+    </td>
+    <td style="color:var(--text-secondary);font-size:0.78rem">{{ l.triggered_by or '?' }}</td>
+    <td>
+        {% if l.status == 'success' %}<span class="badge badge-green">{{ _t('Success') }}</span>
+        {% elif l.status == 'failed' %}<span class="badge badge-red">{{ _t('Failed') }}</span>
+        {% elif l.status == 'running' %}<span class="badge badge-green">{{ _t('Running') }}</span>
+        {% else %}<span class="badge badge-gray">{{ l.status }}</span>
+        {% endif %}
+    </td>
+    <td style="color:var(--text-secondary);font-size:0.8rem">
+        {% if l.duration_ms %}
+            {% if l.duration_ms < 1000 %}{{ l.duration_ms }}ms
+            {% else %}{{ (l.duration_ms / 1000) | round(1) }}s{% endif %}
+        {% else %}-{% endif %}
+    </td>
+</tr>
+{% else %}
+<tr><td colspan="5"><div class="empty-state"><p>{{ _t('No logs found.') }}</p></div></td></tr>
+{% endfor %}
+{% if count > 0 %}
+<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);font-size:0.75rem;padding:0.5rem">
+    {{ count }} {{ _t('entries') }}
+</td></tr>
+{% endif %}

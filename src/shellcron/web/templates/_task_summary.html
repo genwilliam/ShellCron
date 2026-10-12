@@ -1,0 +1,13 @@
+{% set enabled = tasks | selectattr('enabled') | list %}
+{% set failed = tasks | selectattr('last_status', 'equalto', 'failed') | list %}
+{% set running = tasks | selectattr('running') | list %}
+<div class="summary-bar">
+    <span><strong>{{ tasks | length }}</strong> {{ _t('total') }}</span>
+    <span style="color:var(--success)">● <strong>{{ enabled | length }}</strong> {{ _t('enabled') }}</span>
+    {% if running %}
+    <span style="color:var(--accent)">▶ <strong>{{ running | length }}</strong> {{ _t('running') }}</span>
+    {% endif %}
+    {% if failed %}
+    <span style="color:var(--danger)">✕ <strong>{{ failed | length }}</strong> {{ _t('failed') }}</span>
+    {% endif %}
+</div>
